@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { getTasks, createTask } from './task.controller';
+import { authenticate } from '../../middleware/authentication';
 
 const router = Router();
 
-router.get('/tasks', getTasks);
-router.post('/tasks', createTask);
+router.get('/tasks', authenticate, getTasks);
+router.post('/tasks', authenticate, createTask);
 
 export default router;
