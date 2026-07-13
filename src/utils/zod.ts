@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Role, TaskStatus, Priority } from '@prisma/client';
 
 export const registerSchema = z.object({
     email: z.email('Invalid email format'),
@@ -13,4 +14,19 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
     identifier: z.string().min(1, 'Email or username is required'),
     password: z.string().min(1, 'Password is required'),
+});
+
+export const userSchema = z.object({
+    email: z.email('Invalid email format').optional(),
+    username: z.string().min(3, 'Username must be at least 3 characters').max(30, 'Username too long').optional(),
+    role: z.enum([Role.user, Role.admin, Role.moderator]).optional(),
+    isActive: z.boolean().optional(),
+});
+
+export const taskSchema = z.object({
+    title: z.string().min(1, 'Title is required').max(30, 'Title too long').optional(),
+    description: z.string().optional().nullable(),
+    status: z.enum([TaskStatus.pending, TaskStatus.in_progress, TaskStatus.completed, TaskStatus.cancelled]).optional(),
+    priority: z.enum([Priority.low, Priority.medium, Priority.high, Priority.critical]).optional(),
+    dueDate: z.date().optional().nullable(),
 });

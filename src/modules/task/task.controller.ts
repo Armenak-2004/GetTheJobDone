@@ -1,17 +1,32 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthRequest } from '../../types/index';
+import { PrismaClient } from '@prisma/client';
+import { errorHandler } from '../../middleware/errorHandler';
 
-export const getTasks = (req: Request, res: Response) => {
-    res.json({
+const prisma = new PrismaClient();
+
+export const getTask = async (req: AuthRequest, res: Response) => {
+    const id = String(req.params.id); //req.params always returns string
+
+    const task = await prisma.task.findUnique({
+        where: { id },
+    });
+
+    if (!task) {
+        return errorHandler(res, "Task not found", 404)
+    }
+
+    res.status(200).json({
         success: true,
-        message: 'Get all tasks',
-        data: [],
+        data: task,
     });
 };
 
-export const createTask = (req: Request, res: Response) => {
-    res.json({
+export const getAllTasks = async (req: AuthRequest, res: Response) => {
+    const tasks = await prisma.task.findMany();
+
+    res.status(200).json({
         success: true,
-        message: 'Task created successfully',
-        data: req.body,
+        data: tasks,
     });
 };

@@ -1,25 +1,28 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 
-class InternalError extends Error {
-    public statusCode: number;
-    constructor(message: string, statusCode: number = 500) {
-        super(message);
-        this.statusCode = statusCode;
-        this.name = this.constructor.name;
-    }
-}
-
 export const errorHandler = (
-    err: Error | InternalError,
+    res: Response,
+    message: string,
+    statusCode: number = 500,
+) => {
+    logger.error(`❌ Error: ${message}`);
+    return res.status(statusCode).json({
+        success: false,
+        message: message,
+    });
+};
+
+export const appError = (
+    err: Error | unknown,
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
-    logger.error(`Error occurred: ${err.message}`);
 
-    const statusCode = err instanceof InternalError ? err.statusCode : 500;
-    const message = err.message || 'Internal server error';
+    const statusCode = 500;
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    logger.error(`Error occurred: ${message}`);
 
     res.status(statusCode).json({
         success: false,

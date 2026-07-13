@@ -2,23 +2,31 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { hashPassword, comparePassword } from '../../utils/hash';
 import { generateToken } from '../../utils/jwt';
+import { errorHandler } from '../../middleware/errorHandler';
 
 const prisma = new PrismaClient();
 
 export const register = async (req: Request, res: Response) => {
     const { email, username, password } = req.body;
 
-    const existingUser = await prisma.user.findFirst({
+    const existingEmailUser = await prisma.user.findFirst({
         where: {
-            OR: [{ email }, { username }],
+            OR: [{ email }],
         },
     });
 
-    if (existingUser) {
-        return res.status(400).json({
-            success: false,
-            message: 'Email or username already exists',
-        });
+    if (existingEmailUser) {
+        return errorHandler(res, "Email already exists", 400);
+    }
+
+    const existingUsernameUser = await prisma.user.findFirst({
+        where: {
+            OR: [{ username }],
+        },
+    });
+
+    if (existingUsernameUser) {
+        return errorHandler(res, "Username already exists", 400);
     }
 
     const hashedPassword = await hashPassword(password);
@@ -65,19 +73,13 @@ export const login = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-        return res.status(401).json({
-            success: false,
-            message: 'Invalid credentials',
-        });
+        return errorHandler(res, "Invalid credentials", 401)
     }
 
     const isPasswordValid = await comparePassword(password, user.password);
 
     if (!isPasswordValid) {
-        return res.status(401).json({
-            success: false,
-            message: 'Invalid credentials',
-        });
+        return errorHandler(res, "Invalid credentials", 401)
     }
 
     const token = generateToken({
@@ -86,7 +88,7 @@ export const login = async (req: Request, res: Response) => {
         role: user.role,
     });
 
-    res.json({
+    res.status(200).json({
         success: true,
         message: 'Login successful',
         data: {
